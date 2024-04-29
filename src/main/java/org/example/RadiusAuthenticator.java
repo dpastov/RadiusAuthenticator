@@ -1,7 +1,9 @@
 package org.example;
 
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.Properties;
 
 import org.tinyradius.packet.AccessRequest;
@@ -15,9 +17,12 @@ public class RadiusAuthenticator {
         Properties properties = new Properties();
         try {
             // Load properties from file
-            FileInputStream fileInputStream = new FileInputStream("config.properties");
-            properties.load(fileInputStream);
-            fileInputStream.close();
+            try (FileInputStream fileInputStream = new FileInputStream("config.properties")) {
+                properties.load(fileInputStream);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
 
             // Read properties
             String host = properties.getProperty("radius.host");
@@ -31,17 +36,16 @@ public class RadiusAuthenticator {
 
             // Authenticate with valid token
             RadiusPacket validResponse = authenticate(rc, username, validToken);
-            logResult("Valid Token", validResponse);
 
             // Authenticate with invalid token
             RadiusPacket invalidResponse = authenticate(rc, username, invalidToken);
-            logResult("Invalid Token", invalidResponse);
 
-        } catch (IOException e) {
+            // Write results to a file
+            writeResults("result.txt", validResponse, invalidResponse);
+
+        } catch (IOException | RadiusException e) {
             e.printStackTrace();
-        } catch (RadiusException e) {
-			e.printStackTrace();
-		}
+        }
     }
 
     private static RadiusPacket authenticate(RadiusClient rc, String username, String token) throws IOException, RadiusException {
@@ -49,10 +53,10 @@ public class RadiusAuthenticator {
         return rc.authenticate(ar);
     }
 
-    private static void logResult(String type, RadiusPacket response) {
-        String result = (response != null && response.getPacketType() == RadiusPacket.ACCESS_ACCEPT) ? "Success" : "Failure";
-        System.out.println(type + " Authentication Result: " + result);
-        // Log the result to a file for debugging
-        // You can implement the file logging here
+    private static void writeResults(String filename, RadiusPacket validResponse, RadiusPacket invalidResponse) throws IOException {
+        try (Writer writer = new FileWriter(filename)) {
+            writer.write("Valid Token Authentication Result: " + (validResponse != null && validResponse.getPacketType() == RadiusPacket.ACCESS_ACCEPT ? "Success" : "Failure") + "\n");
+            writer.write("Invalid Token Authentication Result: " + (invalidResponse != null && invalidResponse.getPacketType() == RadiusPacket.ACCESS_ACCEPT ? "Success" : "Failure") + "\n");
+        }
     }
 }
