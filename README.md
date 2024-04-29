@@ -5,17 +5,25 @@ A simple client based on tinyradius
 mvn package
 
 # Properties
-file name: config.properties
+file name: **config.properties**
 
-file contnet:
-radius.host=127.0.0.1:20001
-radius.potr=20001
-radius.sharedSecret=mySharedSecret123
-radius.username=john doe
-radius.validToken=myValidToken123
-radius.invalidToken=myInvalidToken456
+file content:
+```
+# RADIUS Server Configuration
+radius.host=localhost
+radius.sharedSecret=sharedSecret123
+
+# User Authentication Credentials
+radius.username=John
+radius.token=token123
+```
 
 # Run
 java -jar TinyRadiusClient-1.0.0.jar
 
 # Sucess run
+```
+Apr 29, 2024 4:35:49 PM org.tinyradius.util.RadiusClient authenticate
+INFO: send Access-Request packet: Access-Request, ID 1
+User-Name: John
+```
