@@ -2,7 +2,9 @@
 A simple client based on tinyradius (there is also a test server for it: https://github.com/dpastov/TinyRadiusServer/)
 
 # Build
+```
 mvn package
+```
 
 # Properties
 file name: **config.properties**
@@ -19,7 +21,9 @@ radius.token=token123
 ```
 
 # Run
+```
 java -jar TinyRadiusClient-1.0.0.jar
+```
 
 # Sucess run
 ```
