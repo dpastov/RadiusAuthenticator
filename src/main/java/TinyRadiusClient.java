@@ -11,52 +11,37 @@ import org.tinyradius.util.RadiusException;
 
 public class TinyRadiusClient {
 
-    public static void main(String[] args) {
-    	System.out.println("TinyRadiusClient - started");
-        Properties properties = new Properties();
-        try {
-            // Load properties from file
-            try (FileInputStream fileInputStream = new FileInputStream("config.properties")) {
-                properties.load(fileInputStream);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
+	public static void main(String[] args) {
+		try {
+			Properties properties = new Properties();
+			FileInputStream fis = new FileInputStream("config.properties");
+			properties.load(fis);
+			fis.close();
 
-            // Read properties
-            String host = properties.getProperty("radius.host");
-            String sharedSecret = properties.getProperty("radius.sharedSecret");
-            String username = properties.getProperty("radius.username");
-            String validToken = properties.getProperty("radius.validToken");
-            String invalidToken = properties.getProperty("radius.invalidToken");
+			// Read properties
+			String host = properties.getProperty("radius.host");
+			String sharedSecret = properties.getProperty("radius.sharedSecret");
+			String username = properties.getProperty("radius.username");
+			String token = properties.getProperty("radius.token");
 
-            // Initialize Radius client
-            
-            RadiusClient rc = new RadiusClient(host, sharedSecret);
+			// Initialize Radius client
+			RadiusClient rc = new RadiusClient(host, sharedSecret);
 
-            // Authenticate with valid token
-            RadiusPacket validResponse = authenticate(rc, username, validToken);
+			AccessRequest ar = new AccessRequest(username, token);
+			RadiusPacket response = rc.authenticate(ar);
 
-            // Authenticate with invalid token
-            RadiusPacket invalidResponse = authenticate(rc, username, invalidToken);
+			// Write results to a file
+			writeResults("result.txt", response);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (RadiusException e) {
+			e.printStackTrace();
+		}
+	}
 
-            // Write results to a file
-            writeResults("result.txt", validResponse, invalidResponse);
-
-        } catch (IOException | RadiusException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static RadiusPacket authenticate(RadiusClient rc, String username, String token) throws IOException, RadiusException {
-        AccessRequest ar = new AccessRequest(username, token);
-        return rc.authenticate(ar);
-    }
-
-    private static void writeResults(String filename, RadiusPacket validResponse, RadiusPacket invalidResponse) throws IOException {
-        try (Writer writer = new FileWriter(filename)) {
-            writer.write("Valid Token Authentication Result: " + (validResponse != null && validResponse.getPacketType() == RadiusPacket.ACCESS_ACCEPT ? "Success" : "Failure") + "\n");
-            writer.write("Invalid Token Authentication Result: " + (invalidResponse != null && invalidResponse.getPacketType() == RadiusPacket.ACCESS_ACCEPT ? "Success" : "Failure") + "\n");
-        }
-    }
+	private static void writeResults(String filename, RadiusPacket response) throws IOException {
+		Writer writer = new FileWriter(filename);
+		writer.write("Result: " + response.toString() + "\n");
+		writer.close();
+	}
 }
